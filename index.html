@@ -1,0 +1,81 @@
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <title>Steganografi Gambar</title>  
+</head>  
+<body>  
+    <h2>Steganografi: Simpan Pesan di Gambar</h2>  
+    <input type="file" id="imageInput">  
+    <textarea id="message" placeholder="Masukkan pesan"></textarea>  
+    <button onclick="encodeMessage()">Sisipkan Pesan</button>  
+    <button onclick="decodeMessage()">Ekstrak Pesan</button>
+    <div id="result"></div>
+    <canvas id="canvas" style="display:none;"></canvas>  
+    <script>  
+        function encodeMessage() {  
+            let file = document.getElementById("imageInput").files[0];  
+            let message = document.getElementById("message").value;  
+            if (!file || !message) return alert("Pilih gambar dan masukkan pesan!");let reader = new FileReader();  
+        reader.onload = function(event) {  
+            let img = new Image();  
+            img.onload = function() {  
+                let canvas = document.getElementById("canvas");  
+                let ctx = canvas.getContext("2d");  
+                canvas.width = img.width;  
+                canvas.height = img.height;  
+                ctx.drawImage(img, 0, 0);  
+                  
+                let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);  
+                let data = imageData.data;  
+                  
+                for (let i = 0; i < message.length; i++) {  
+                    data[i * 4] = message.charCodeAt(i);  
+                }  
+                data[message.length * 4] = 0; // Penanda akhir pesan  
+                  
+                ctx.putImageData(imageData, 0, 0);  
+                let encodedImage = canvas.toDataURL();  
+                let a = document.createElement("a");  
+                a.href = encodedImage;  
+                a.download = "encoded_image.png";  
+                a.click();  
+            };  
+            img.src = event.target.result;  
+        };  
+        reader.readAsDataURL(file);  
+    }  
+      
+    function decodeMessage() {  
+        let file = document.getElementById("imageInput").files[0];
+        if (!file) return alert("Pilih gambar untuk diekstrak!");
+        
+        let reader = new FileReader();
+        reader.onload = function(event) {
+            let img = new Image();
+            img.onload = function() {
+                let canvas = document.getElementById("canvas");
+                let ctx = canvas.getContext("2d");
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                
+                let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                let data = imageData.data;
+                
+                let extractedMessage = "";
+                for (let i = 0; i < data.length; i += 4) {
+                    if (data[i] === 0) break;
+                    extractedMessage += String.fromCharCode(data[i]);
+                }
+                document.getElementById('result').textContent = extractedMessage;
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+</script>  
+  
+</body>  
+</html>
